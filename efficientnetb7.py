@@ -192,17 +192,30 @@ class EfficientNet(nn.Module):
 
         self._initialize_weights()
 
-    def forward(self, x):
-        x = self.stem_conv(x)
-        x = self.blocks(x)
-        x = self.head_conv(x)
-        #x = self.avgpool(x)
-        #x = x.view(x.size(0), -1)
-        x = torch.mean(x, (2, 3))
-        x = self.dropout(x)
-        x = self.classifier(x)
-
-        return x
+    def forward(self, x, last=False, freeze=False):
+            if freeze:
+                with torch.no_grad():
+                    x = self.stem_conv(x)
+                    x = self.blocks(x)
+                    x = self.head_conv(x)
+                    #x = self.avgpool(x)
+                    #x = x.view(x.size(0), -1)
+                    x = torch.mean(x, (2, 3))
+                    e = self.dropout(x)
+                    # x = self.classifier(x)
+            else:
+                x = self.stem_conv(x)
+                x = self.blocks(x)
+                x = self.head_conv(x)
+                #x = self.avgpool(x)
+                #x = x.view(x.size(0), -1)
+                x = torch.mean(x, (2, 3))
+                e = self.dropout(x)
+            out = self.classifier(x)
+            if last:
+                return out, e
+            else:
+                return out
 
     def _initialize_weights(self):
         for m in self.modules():
